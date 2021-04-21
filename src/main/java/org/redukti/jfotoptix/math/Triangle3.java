@@ -26,23 +26,37 @@ Original GNU Optical License and Authors are as follows:
 
 package org.redukti.jfotoptix.math;
 
-public class Triangle2 {
+public class Triangle3 {
     final int N = 3;
-    public final Vector2[] _v;
+    public final Vector3[] _v;
 
-    public Triangle2 (Vector2 a, Vector2 b, Vector2 c)
+    public Triangle3(Vector3 a, Vector3 b, Vector3 c)
     {
-        _v = new Vector2[N];
+        _v = new Vector3[N];
         _v[0] = a;
         _v[1] = b;
         _v[2] = c;
     }
-    public Vector2 v(int i) {
+
+    public Vector3 normal ()
+    {
+        return _v[0].minus(_v[1]).cross(_v[0].minus(_v[2])).normalize();
+    }
+
+    public Vector3 v(int i) {
         return _v[i];
     }
 
-    public Vector2 get_centroid ()
-    {
-        return _v[0].plus(_v[1]).plus(_v[2]).divide(3.);
+    public Triangle3 v(int i, Vector3 v) {
+        switch(i) {
+            case 0: return new Triangle3(v, _v[1], _v[2]);
+            case 1: return new Triangle3(_v[0], v, _v[2]);
+            case 2: return new Triangle3(_v[0], _v[1], v);
+            default: throw new IllegalArgumentException();
+        }
+    }
+
+    public Vector3[] asArray() {
+        return _v.clone();
     }
 }

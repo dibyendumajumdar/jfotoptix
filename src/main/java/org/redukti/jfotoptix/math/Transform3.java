@@ -170,4 +170,8 @@ public class Transform3 {
     public String toString() {
         return "{translation=" + this.translation.toString()+",rmat="+this.rotation_matrix +",use_rmat="+this.use_rotation_matrix +"}";
     }
+
+    public Transform3 translation_reset() {
+        return new Transform3(Vector3.vector3_0, this.rotation_matrix, this.use_rotation_matrix);
+    }
 }

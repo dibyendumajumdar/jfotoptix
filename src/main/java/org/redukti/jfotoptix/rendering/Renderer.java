@@ -227,4 +227,28 @@ public abstract class Renderer {
 //    public void set_max_intensity(double v) {
 //        _max_intensity = v;
 //    }
+
+    // Following added to support 3d render
+    // Not sure if these are worth having
+
+    public void draw_polygon(Vector3[] array, Rgb rgb, boolean filled, boolean closed) {
+        if (array.length < 3)
+            return;
+
+        int i;
+        for (i = 0; i + 1 < array.length; i++)
+            draw_segment(array[i], array[i + 1], rgb);
+
+        if (closed)
+            draw_segment(array[i], array[0], rgb);
+    }
+
+    public void draw_triangle(Triangle3 t, Rgb rgb) {
+        draw_polygon(t.asArray(), rgb, false, true);
+    }
+
+    public void draw_triangle(Triangle3 t,
+                              Triangle3 gradient, Rgb rgb) {
+        draw_triangle(t, rgb);
+    }
 }

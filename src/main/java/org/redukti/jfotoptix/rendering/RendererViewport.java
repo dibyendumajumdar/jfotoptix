@@ -305,4 +305,9 @@ public abstract class RendererViewport extends Renderer {
     public abstract Transform3 get_camera_transform ();
     /** Get modifiable reference to 3d camera transform */
     public abstract void set_camera_transform (Transform3 t);
+
+    public double get_fov() {
+        return _fov;
+    }
+
 }
