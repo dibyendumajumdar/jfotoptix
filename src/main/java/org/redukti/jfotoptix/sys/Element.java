@@ -131,9 +131,9 @@ public abstract class Element {
     }
 
     public static abstract class Builder {
-        int id;
-        Vector3Pair position;
-        Transform3 transform;
+        protected int id;
+        protected Vector3Pair position;
+        protected Transform3 transform;
         Element.Builder parent;
 
         public Builder position(Vector3Pair position) {

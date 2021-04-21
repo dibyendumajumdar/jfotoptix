@@ -70,7 +70,8 @@ public class Lens extends Group {
     @Override
     void set_system(OpticalSystem system) {
         super.set_system(system);
-        _stop.set_system(system);
+        if (_stop != null)
+            _stop.set_system(system);
     }
 
     @Override
@@ -156,6 +157,15 @@ public class Lens extends Group {
         @Override
         public Lens.Builder position(Vector3Pair position) {
             return (Lens.Builder) super.position(position);
+        }
+
+        public Lens.Builder zoffset(double v) {
+            _last_pos = v;
+            return this;
+        }
+
+        public double zoffset() {
+            return _last_pos;
         }
     }
 }

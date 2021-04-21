@@ -28,15 +28,20 @@ package org.redukti.jfotoptix.examples;
 
 import org.redukti.jfotoptix.curve.Conic;
 import org.redukti.jfotoptix.curve.Flat;
+import org.redukti.jfotoptix.layout.SystemLayout2D;
+import org.redukti.jfotoptix.layout.SystemLayout3D;
+import org.redukti.jfotoptix.light.SpectralLine;
+import org.redukti.jfotoptix.material.Sellmeier;
 import org.redukti.jfotoptix.math.MathUtils;
 import org.redukti.jfotoptix.math.Transform3;
 import org.redukti.jfotoptix.math.Vector3;
 import org.redukti.jfotoptix.math.Vector3Pair;
+import org.redukti.jfotoptix.rendering.RendererSvg;
+import org.redukti.jfotoptix.rendering.RendererViewport;
 import org.redukti.jfotoptix.shape.Disk;
 import org.redukti.jfotoptix.shape.Ellipse;
-import org.redukti.jfotoptix.sys.Element;
-import org.redukti.jfotoptix.sys.Group;
-import org.redukti.jfotoptix.sys.MirrorSurface;
+import org.redukti.jfotoptix.shape.Rectangle;
+import org.redukti.jfotoptix.sys.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -104,12 +109,15 @@ public class NewtonTelescope {
 
             @Override
             public Newton build() {
-                return null;
+                return new Newton(id, position, transform, getElements(),
+                        _focal, _diameter, _bwd, _field_angle, _unvignetted_image_size,
+                        _offset, _minor_axis, _major_axis, _primary_shape,
+                        _primary_curve, _primary.build(), _secondary_shape,
+                        _secondary.build(), _focal_plane);
             }
 
-            public Newton.Builder create(Vector3Pair p, double focal, double diameter,
+            public Builder(Vector3Pair p, double focal, double diameter,
                                 double bwd, double field_angle) {
-                List<? extends Element> elements = new ArrayList<>();
                 position(p);
                 _focal = focal;
                 _diameter = diameter;
@@ -134,7 +142,6 @@ public class NewtonTelescope {
                 _secondary.transform(_secondary.transform().rotate_axis_by_angles(new Vector3(-135, 0, 0)));
                 add (_primary);
                 add (_secondary);
-                return this;
             }
 
             double calc_unvignetted_image_size ()
@@ -162,7 +169,130 @@ public class NewtonTelescope {
 
                 return _offset;
             }
+
+            Vector3Pair get_focal_plane() {
+                return _focal_plane;
+            }
         }
-    };
+    }
+
+    static Vector3Pair get_exit_plane (Lens.Builder lens)
+    {
+        return lens.transform ().transform_line (
+                new Vector3Pair (new Vector3(0., 0., lens.zoffset()), Vector3.vector3_001));
+    }
+
+    public static void main(String[] args) {
+        Sellmeier bk7 = new Sellmeier (1.03961212, 6.00069867e-3,
+                0.231792344, 2.00179144e-2,
+                1.01046945, 1.03560653e2);
+
+        //**********************************************************************
+        // Optical system definition
+
+        /* anchor telescope */
+        OpticalSystem.Builder systemBuilder = new OpticalSystem.Builder();
+
+        // light source
+        PointSource.Builder ps = new PointSource.Builder(PointSource.SourceInfinityMode.SourceAtInfinity, Vector3.vector3_001)
+                .add_spectral_line(SpectralLine.d)
+                .add_spectral_line(SpectralLine.C)
+                .add_spectral_line(SpectralLine.F);
+        systemBuilder.add(ps);
+
+        // Newton telescope
+        Newton.Builder newton = new Newton.Builder (
+                Vector3Pair.position_000_001, // position
+                1494.567 / 2.,   // focal len
+                245.1,          // aperture diameter
+                100,
+        1.0);
+        systemBuilder.add (newton);
+        /* anchor corrector */
+
+        // Wynne 4 lens corrector for parabolic mirrors
+        Lens.Builder wynne
+                = new Lens.Builder ().position(newton.get_focal_plane ())
+                .zoffset(-48.4585); // z offset of first surface
+
+        //  roc       ap.radius  thickness  material
+        wynne.add_surface (21.496, 23.2 / 2., 1.905, bk7);
+        wynne.add_surface (24.787, 22.5 / 2., 1.574);
+        wynne.add_surface (55.890, 22.5 / 2., 1.270, bk7);
+        wynne.add_surface (45.164, 21.8 / 2., 18.504);
+        wynne.add_surface (29.410, 14.7 / 2., 0.45, bk7);
+        wynne.add_surface (13.870, 14.1 / 2., 16.086);
+        wynne.add_surface (23.617, 13.1 / 2., 1.805, bk7);
+        wynne.add_surface (0, 12.8 / 2., 9.003);
+
+        systemBuilder.add (wynne);
+
+        // image plane
+        Image.Builder image = new Image.Builder().position (get_exit_plane (wynne))
+                .curve(Flat.flat)
+                .shape(new Rectangle(.15 * 2.0));
+        systemBuilder.add (image);
+
+
+
+        /* anchor end */
+
+        //**********************************************************************
+        // Display some newton telescope parameters
+
+        /* anchor print */
+//        std::cout << "unvignetted image diameter: "
+//                << newton->get_unvignetted_image_diameter () << std::endl;
+//
+//        std::cout << "secondary minor axis size: "
+//                << newton->get_secondary_minor_axis () << std::endl;
+//
+//        std::cout << "secondary offset: " << newton->get_secondary_offset ()
+//                << std::endl;
+//
+//        std::cout << "field angle: " << newton->get_field_angle () << std::endl;
+
+
+        {
+//            trace::Tracer tracer (sys.get ());
+//
+//            // set system entrance pupil (needed by non-sequential ray trace)
+//            sys->set_entrance_pupil (newton->get_primary ());
+//
+//            // trace rays through the system
+//            tracer.get_params ().set_default_distribution (
+//                    trace::Distribution (trace::CrossDist, 5));
+//            tracer.get_trace_result ().set_generated_save_state (*source);
+//            tracer.trace ();
+
+            /* anchor layout */
+            RendererSvg svg_renderer = new RendererSvg ( 640, 480);
+            RendererViewport renderer = svg_renderer;
+
+            // horizontal page layout
+            renderer.set_page_layout (1, 2);
+
+            // 3d system layout on 1st sub-page
+            renderer.set_page (0);
+            renderer.set_perspective ();
+
+            OpticalSystem sys = systemBuilder.build();
+            SystemLayout3D layout = new SystemLayout3D();
+            layout.layout3d(svg_renderer, sys);
+
+//            tracer.get_trace_result ().draw_3d (renderer);
+
+            // 2d Wynne corrector layout on 2nd sub-page
+            renderer.set_page (1);
+
+//            SystemLayout2D layout2D = new SystemLayout2D();
+//            layout2D.layout2d(wynne);
+
+//            tracer.get_trace_result ().draw_2d (renderer, false, wynne.get ());
+            /* anchor end */
+
+            System.out.println(svg_renderer.write(new StringBuilder()).toString());
+        }
+    }
 
 }
