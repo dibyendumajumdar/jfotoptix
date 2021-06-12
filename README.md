@@ -1,4 +1,4 @@
-# jFotoptix
+# NOTICE This project is now superceded by [Beam42](https://github.com/BeamFour/Beam42)
 
 This is work-in-progress Java port of https://github.com/dibyendumajumdar/goptical.
 
